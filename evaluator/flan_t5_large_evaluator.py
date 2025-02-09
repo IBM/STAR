@@ -29,17 +29,8 @@ class Flan_t5_Large_evaluator:
         self.get_dataset_config()
 
     def get_dataset_config(self):
-        if self.dataset_name == 'cola':
-            ds = load_dataset("nyu-mll/glue", "cola", cache_dir=self.cache_dir)
-            self.num_samples_per_label = 1000
-            self.processed_ds = self.process_dataset(ds)
-            self.max_new_tokens = 10
-            self.generate_template_fn = self.generate_cola_template
-            self.text_label_map = {
-                '0': ['unacceptable', 'Unacceptable'],
-                '1': ['acceptable', 'Acceptable'],                
-            }
-        elif self.dataset_name == 'qqp':
+        print(f'Downloading datasets of {self.dataset_name}')
+        if self.dataset_name == 'qqp':
             ds = load_dataset("nyu-mll/glue", "qqp", cache_dir=self.cache_dir)
             self.num_samples_per_label = 1000
             self.processed_ds = self.process_dataset(ds)
@@ -174,9 +165,7 @@ class Flan_t5_Large_evaluator:
             raise ValueError(f"Dataset {self.dataset_name} is not supported.")
 
     def process_dataset(self, ds):
-        print(f'Downloading datasets of {self.dataset_name}')
-
-        if self.dataset_name in ['cola', 'sst2', 'stsb']:
+        if self.dataset_name in ['sst2', 'stsb']:
             final_ds = ds['validation']
         elif self.dataset_name in ['qqp', 'mnli', 'rte', 'qnli', 'hella', 'piqa']:
             final_ds = balanced_sample(ds['validation'], label_column='label', num_samples_per_label=self.num_samples_per_label)
@@ -267,7 +256,7 @@ class Flan_t5_Large_evaluator:
         total_predictions = 0
 
         ## Handling input data
-        if self.dataset_name in ['cola', 'sst2', 'finance']:
+        if self.dataset_name in ['sst2', 'finance']:
             sentences = [example['sentence'] for example in self.processed_ds]
             true_labels = [example['label'] for example in self.processed_ds]
         elif self.dataset_name in ['qqp']:
@@ -310,7 +299,7 @@ class Flan_t5_Large_evaluator:
 
         ## For loop to get the LLM respond on input data
         for i in tqdm(range(0, len(true_labels), batch_size), desc=f"Evaluating model on {self.dataset_name}"):
-            if self.dataset_name in ['cola', 'sst2', 'finance']:
+            if self.dataset_name in ['sst2', 'finance']:
                 batch_sentences = sentences[i:i + batch_size]
                 batch_labels = true_labels[i:i + batch_size]
                 input_texts = [self.generate_template_fn(sentence) for sentence in batch_sentences]
@@ -415,8 +404,6 @@ class Flan_t5_Large_evaluator:
         clean_model_out(model)
         return accuracy
     
-    def generate_cola_template(self, sentence):
-        return f"Indicate if the following sentence is grammatically correct or not: \"{sentence}\". Answer ‘acceptable’ or ‘unacceptable’."
     def generate_qqp_template(self, question1, question2):
         return f"Do the questions ‘{question1}’ and ‘{question2}’ have the same intent? Answer with ‘yes’ or ‘no’."
     def generate_mnli_template(self, premise, hypothesis):
