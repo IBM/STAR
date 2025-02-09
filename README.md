@@ -96,7 +96,7 @@ Then, the merged model performance on each dataset using different methods can b
 | **STAR**       | 80.08 | 78.63 | 93.20 | 85.30 | 88.17 | 94.95 | 87.64 | 66.96   | 88.30 | 91.00  | 76.88 | 83.13  | 77.86 | **94.55** |
 
 *Note that the exact number might slightly vary from the paper (shfit upward in this case). This is perfectly normal since testing data was randomly sampled to avoid computation overhead.*  
-*Feel free to adjust the number of samples for each dataset according to your needs [here](https://github.com/IBM/STAR/blob/cb1be15ce9c4428f8adeb6f605348436fa481a84/evaluator/flan_t5_large_evaluator.py#L34), and an identical trend could still be observed.*
+*Feel free to adjust the number of samples for each dataset according to your needs [here](https://github.com/IBM/STAR/blob/cb1be15ce9c4428f8adeb6f605348436fa481a84/evaluator/flan_t5_large_evaluator.py#L35), and an identical trend could still be observed.*
 
 
 
