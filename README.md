@@ -29,10 +29,10 @@ Please also find a local directory (i.e. `<your_cahce_dir>`) with enough space f
 # Evaluate Pretrained model performance all downstream tasks
 python3 ./eval/flan_t5_large/pretrained.py --save_dir './exp_results' --cache_dir '<your_cahce_dir>' --batch_size 16 --tasks 'mnli' 'mrpc' 'qnli' 'qqp' 'rte' 'sst2' 'stsb' 'finance' 'imdb' 'agnews' 'hella' 'boolq' 'piqa'
 ```
-`save_dir`: path for saving results
-`cache_dir`: path for downloading/caching models and datasets
-`tasks`: downstream tasks to test
-`batch_size`: batch size used while evaluating
+`save_dir`: path for saving results    
+`cache_dir`: path for downloading/caching models and datasets    
+`tasks`: downstream tasks to test    
+`batch_size`: batch size used while evaluating    
 `device`: `['cpu', 'cuda:0',...]`
 
 with the results at 
