@@ -8,7 +8,7 @@ import json
 import os
 import argparse
 
-from task_vector.util import load_lora_into_base
+from util import load_lora_into_base, clean_model_out
 from task_vector.get_ft_models import load_flan_t5_large_ft_tvs
 from evaluator.flan_t5_large_evaluator import Flan_t5_Large_evaluator
 

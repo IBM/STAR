@@ -3,14 +3,14 @@ import sys, os
 print(f"Current working directory: {os.getcwd()}")
 sys.path.insert(0, os.getcwd())
 
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import json
 import os
 import argparse
 
 from util import load_lora_into_base, clean_model_out
-from task_vector.get_ft_models import load_flan_t5_large_ft_tvs
-from evaluator.flan_t5_large_evaluator import Flan_t5_Large_evaluator
+from task_vector.get_ft_models import load_mistral_inst_ft_tvs
+from evaluator.mistral_inst_evaluator import Mistral_inst_evaluator
 
 from merger.STAR import star_task_vectors
 from merger.TIES import local_trim_weights, global_trim_weights, elect_sign, disjoint_merge
@@ -27,7 +27,8 @@ def parse_arguments():
     parser.add_argument('--cache_dir', type=str, help='dir for loading models and evaluation datasets')
     parser.add_argument('--save_dir', type=str, help='output saving dir')
     parser.add_argument('--device', type=str, default='cuda:0')
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size used when batch inference to evaluate model performance')
+    parser.add_argument('--batch_size', type=int, default=8, help='batch size used when batch inference to evaluate model performance')
+
 
     ## STAR specific hyperparameter
     parser.add_argument('--eta', type=float, default=40, help='truncate eta percentage of nuclear norm')
@@ -46,19 +47,27 @@ def parse_arguments():
 def get_evaluators(tasks, cache_dir):
     evaluators = {}
     for task in tasks:
-        evaluators[task] = Flan_t5_Large_evaluator(task, cache_dir)
+        evaluators[task] = Mistral_inst_evaluator(task, cache_dir)
     return evaluators
 
 def evaluate_model(model, tokenizer, evaluators, tasks, batch_size, device):
     accuracy_records = {}
     for task in tasks:
         # print(f'Evaluating on {task}')
-        if task == 'stsb':
-            spearman_rho = evaluators[task].evaluate_stsb(model, tokenizer, device=device, print_output=False,  batch_size=batch_size)        
-            print(f'{task}: Spearman_rho : {round(spearman_rho, 4)}')
-            accuracy_records[task] = round(spearman_rho, 4)
+        if task == 'qasc':
+            _, _, avg_f1_score = evaluators[task].evaluate_F1(model, tokenizer, batch_size=batch_size, device=device, print_output=False)
+            print(f'{task}: Average F1 score : {round(avg_f1_score, 4)}')
+            accuracy_records[task] = round(avg_f1_score, 4)
+        elif task == 'dream':
+            accuracy = evaluators[task].evaluate_dream(model, tokenizer, batch_size=batch_size, device=device, print_output=False)
+            print(f'{task}: Accuracy : {round(accuracy, 4)}')
+            accuracy_records[task] = round(accuracy, 4)
+        elif task in ['ncbi', 'gap']:
+            accuracy = evaluators[task].evaluate_ncbi_gap(model, tokenizer, batch_size=batch_size, device=device, print_output=False)
+            print(f'{task}: Accuracy : {round(accuracy, 4)}')
+            accuracy_records[task] = round(accuracy, 4)
         else:
-            accuracy = evaluators[task].evaluate(model, tokenizer, device=device, print_output=False,  batch_size=batch_size)
+            accuracy = evaluators[task].evaluate(model, tokenizer,  batch_size=batch_size, device=device, print_output=False)
             print(f'{task}: Accuracy : {round(accuracy, 4)}')
             accuracy_records[task] = round(accuracy, 4)
     return accuracy_records
@@ -66,18 +75,20 @@ def evaluate_model(model, tokenizer, evaluators, tasks, batch_size, device):
 def main():
     args = parse_arguments()
 
-    base_model_name =  "google/flan-t5-large"
+    base_model_name =  "mistralai/Mistral-7B-Instruct-v0.2"
     
     print(f'Downloading {base_model_name}, to {args.cache_dir}')
     tokenizer = AutoTokenizer.from_pretrained(base_model_name,  cache_dir = args.cache_dir)
-    base_model = AutoModelForSeq2SeqLM.from_pretrained(base_model_name,  cache_dir = args.cache_dir)
-    
+    tokenizer.padding_side = "left" 
+    tokenizer.pad_token = tokenizer.eos_token # to avoid an error
+    base_model = AutoModelForCausalLM.from_pretrained(base_model_name,  cache_dir = args.cache_dir)
+
+
     print(f'Perform merging on {args.tasks}')
     print(f'Total: {len(args.tasks)} models')
-
     
     print('================ Get the task vectors ================')
-    tv_dicts = load_flan_t5_large_ft_tvs(base_model, args.tasks, args.cache_dir)
+    tv_dicts = load_mistral_inst_ft_tvs(base_model, args.tasks, args.cache_dir)
     sorted_task_str = "_".join(sorted(args.tasks, key=lambda x: x[0]))
     
     if args.method == 'STAR':
@@ -87,13 +98,13 @@ def main():
             print('activate low_rank SVD')
         else:
             print('full SVD is used, please specify args.known_rank for faster low_rank SVD')
-        star_tv_dicts = star_task_vectors(tv_dicts, args.eta, known_rank=args.known_rank)
+            
+        star_tv_dicts = star_task_vectors(tv_dicts, args.eta, known_rank=args.known_rank) 
         star_tv_list = list(star_tv_dicts.values())
         
         ## Simple Averaging
         alphas = [1/len(star_tv_list)] * len(star_tv_list) 
         merged_tv_dict = weighted_merge(star_tv_list, alphas)
-
     elif args.method == 'TIES':
         print(f'================ TIES merging using k = {args.k} ================')
         file_name = f'{args.method}_k{args.k}.json'
@@ -130,14 +141,14 @@ def main():
     
     print('================ Evaluate Merged Model ================')
     evaluators = get_evaluators(args.tasks, args.cache_dir)
-    accuracy_records = evaluate_model(merged_model, tokenizer, evaluators, args.tasks, args.batch_size,  args.device)
+    accuracy_records = evaluate_model(merged_model, tokenizer, evaluators, args.tasks, args.batch_size, args.device)
     
     ## saving results
-    flan_t5_large_dir = os.path.join(args.save_dir, f"Flan_T5_large/{sorted_task_str}")
-    os.makedirs(flan_t5_large_dir, exist_ok=True)
+    mistral_inst_dir = os.path.join(args.save_dir, f"Mistral_inst/{sorted_task_str}")
+    os.makedirs(mistral_inst_dir, exist_ok=True)
 
 
-    file_path = os.path.join(flan_t5_large_dir, file_name)
+    file_path = os.path.join(mistral_inst_dir, file_name)
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(accuracy_records, f, indent=4, ensure_ascii=False)
 

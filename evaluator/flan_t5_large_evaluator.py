@@ -1,26 +1,10 @@
 from tqdm import tqdm
-from datasets import load_dataset, Dataset
-from collections import Counter
-import random
+from datasets import load_dataset
 import torch
 import re
 from scipy.stats import spearmanr
-from task_vector.util import clean_model_out
+from util import random_balanced_sample, clean_model_out
 
-
-def balanced_sample(dataset, label_column, num_samples_per_label):
-    label_counts = Counter(dataset[label_column])
-    min_count = min(label_counts.values())
-    
-    num_samples_per_label = min(num_samples_per_label, min_count)
-    
-    sampled_data = []
-    random.seed(42)
-    for label in label_counts.keys():
-        label_samples = [example for example in dataset if example[label_column] == label]
-        sampled_data.extend(random.sample(label_samples, num_samples_per_label))
-
-    return Dataset.from_dict({key: [sample[key] for sample in sampled_data] for key in dataset.column_names})
 
 class Flan_t5_Large_evaluator:
     def __init__(self, dataset_name, cache_dir):
@@ -168,12 +152,11 @@ class Flan_t5_Large_evaluator:
         if self.dataset_name in ['sst2', 'stsb']:
             final_ds = ds['validation']
         elif self.dataset_name in ['qqp', 'mnli', 'rte', 'qnli', 'hella', 'piqa']:
-            final_ds = balanced_sample(ds['validation'], label_column='label', num_samples_per_label=self.num_samples_per_label)
+            final_ds = random_balanced_sample(ds['validation'], label_column='label', num_samples_per_label=self.num_samples_per_label)
         elif self.dataset_name in ['boolq']:
-            final_ds = balanced_sample(ds['validation'], label_column='answer', num_samples_per_label=self.num_samples_per_label)    
+            final_ds = random_balanced_sample(ds['validation'], label_column='answer', num_samples_per_label=self.num_samples_per_label)    
         elif self.dataset_name in ['mrpc', 'imdb', 'agnews']:
-            final_ds = balanced_sample(ds['test'], label_column='label', num_samples_per_label=self.num_samples_per_label)
-
+            final_ds = random_balanced_sample(ds['test'], label_column='label', num_samples_per_label=self.num_samples_per_label)
         elif self.dataset_name in ['finance']:
             split_ds = ds["train"].train_test_split(test_size=0.1, seed=42)
             final_ds = split_ds['test']   

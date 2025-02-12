@@ -1,27 +1,53 @@
 import torch
 from tqdm import tqdm
 
-def global_trim_weights(tv_dicts, k):
+def global_trim_weights(tv_dicts, k, device):
     trimmed_tv_dicts = {}
+
     for task, tv_dict in tv_dicts.items():
         print(f'========= Trim {task} =========')
-        # Concatenate all the layers' values into a single tensor
-        all_values = torch.cat([tv_dict[key].view(-1) for key in tqdm(tv_dict.keys(), desc='Flatten')])
+        
+        tv_dict_gpu = {key: tensor.to(device) for key, tensor in tv_dict.items()} # move to gpu for later fast 'torch.topk'
+        all_values = torch.cat([tv_dict_gpu[key].view(-1) for key in tqdm(tv_dict_gpu.keys(), desc='Flatten')])
         
         keep_num = int(all_values.size(0) * k / 100)
         threshold_value = torch.topk(all_values.abs(), keep_num, largest=True)[0][-1]
-        
-        trimmed_tv_dict = {}
-        
-        # Trim each layer using the global threshold
-        for key in tqdm(tv_dict.keys(), desc="Trim"):
-            tensor = tv_dict[key]
 
-            # Set values below the threshold to zero
-            trimmed_tv_dict[key]  = torch.where(tensor.abs() >= threshold_value, tensor, torch.tensor(0.0))
-        
+        trimmed_tv_dict = {}
+
+        for key in tqdm(tv_dict_gpu.keys(), desc="Trim"):
+            tensor = tv_dict_gpu[key]
+            trimmed_tensor = torch.where(tensor.abs() >= threshold_value, tensor, torch.tensor(0.0, device=device))
+            trimmed_tv_dict[key] = trimmed_tensor.to("cpu")
         trimmed_tv_dicts[task] = trimmed_tv_dict
+        del tv_dict_gpu, all_values, threshold_value
+        torch.cuda.empty_cache()
     return trimmed_tv_dicts
+
+def local_trim_weights(tv_dicts, k, device):
+    trimmed_tv_dicts = {}
+
+    for task, tv_dict in tv_dicts.items():
+        print(f'========= Trim {task} =========')
+        trimmed_tv_dict = {}
+
+        tv_dict_gpu = {key: tensor.to(device) for key, tensor in tv_dict.items()} # move to gpu for later fast 'torch.topk'
+
+        for key in tqdm(tv_dict_gpu.keys(), desc="Trim"):
+            tensor = tv_dict_gpu[key]
+            num_elements = tensor.numel()
+            keep_num = int(num_elements * k / 100)
+            threshold_value = torch.topk(tensor.abs().view(-1), keep_num, largest=True)[0][-1]
+            trimmed_tensor = torch.where(tensor.abs() >= threshold_value, tensor, torch.tensor(0.0, device=device))
+            trimmed_tv_dict[key] = trimmed_tensor.to("cpu")
+
+        trimmed_tv_dicts[task] = trimmed_tv_dict
+
+        del tv_dict_gpu
+        torch.cuda.empty_cache()
+
+    return trimmed_tv_dicts
+
 
 def elect_sign(trimmed_tv_dicts):
     elect_sign_dict = {}

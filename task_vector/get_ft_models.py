@@ -1,5 +1,5 @@
 from peft import PeftConfig, load_peft_weights
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM
 
 
 def get_ft_model_tv(base_model, model_name, target_keys, cache_dir):
@@ -77,6 +77,62 @@ def load_flan_t5_large_ft_tvs(base_model, tasks, cache_dir):
             
             model_name = f"Speeeed/flan-t5-large-{task}_lora-16"
             tv_dict = get_ft_model_tv(base_model, model_name, target_keys, cache_dir)
+        else:
+            raise ValueError(f'{task} fine-tuned model currently not support')
+        
+        tv_dicts[task] = tv_dict
+    return tv_dicts
+
+def load_mistral_inst_ft_tvs(base_model, tasks, cache_dir):
+    tv_dicts = {}
+    print(f'Downloading LoRAs of Mistral_instruct, to {cache_dir}')
+    ## link the task name we set to actual model id in Lots of LoRAs
+    task_id_map = {
+    'ethos': 1605,
+    'wino': 1391,
+    'stereo': 280,
+    'causal': 391,
+    'answerable': 290,
+    'qasc': 39,
+    'dream': 247,
+    'ncbi': 1448,
+    'owant': 1198,
+    'amazon': 587,
+    'msr': 1341,
+    'gap': 330,
+    'snli': 190,
+    'argue': 513,
+    'disco': 564,
+    'math': 834,
+    'casino': 357,
+    'story': 298,
+    'pubmed': 846,
+    'sst2': 363
+    } 
+    for task in tasks:
+        print(task)
+        if task in ['ethos', 'wino', 'stereo', 'causal', 'answerable', 'qasc', 'dream', 'ncbi', 'owant', 'amazon', 'msr', 'gap', 'snli', 'argue', 'disco', 'math', 'casino', 'story', 'pubmed', 'sst2']:
+            model_name = f"Lots-of-LoRAs/Mistral-7B-Instruct-v0.2-4b-r16-task{task_id_map[task]}"
+            lora_rank, lora_alpha, lora_parameters_dict = load_lora(model_name, cache_dir)
+            ## Multiply LoRA's B*A, and transform key name to fit the form of base model
+            tv_dict  = transform_lora_dict_to_base_form(lora_parameters_dict, lora_rank, lora_alpha)
+        else:
+            raise ValueError(f'{task} fine-tuned model currently not support')
+        
+        tv_dicts[task] = tv_dict
+    return tv_dicts
+
+
+def load_llama_3b_ft_tvs(base_model, tasks, cache_dir):
+    tv_dicts = {}
+    print(f'Downloading LoRAs of Llama_3b, to {cache_dir}')
+    for task in tasks:
+        print(task)
+        if task in ['sst2', 'mrpc', 'wic', 'cola', 'mnli', 'stsb', 'cb', 'multirc', 'boolq', 'rte', 'copa', 'wsc', 'qnli', 'qqp']:
+            model_name = f"Speeeed/Llama-3.2-3B-instruct-{task}-lora"
+            lora_rank, lora_alpha, lora_parameters_dict = load_lora(model_name, cache_dir)
+            ## Multiply LoRA's B*A, and transform key name to fit the form of base model
+            tv_dict  = transform_lora_dict_to_base_form(lora_parameters_dict, lora_rank, lora_alpha)
         else:
             raise ValueError(f'{task} fine-tuned model currently not support')
         
