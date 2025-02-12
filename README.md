@@ -20,7 +20,7 @@ Please also find a local directory (i.e. `<your_cahce_dir>`) with enough space f
 
 ## Perform Model Merging
 ### Flan-T5-large
-#### Supported 13 fine-tuned models:
+#### Supported 13 fine-tuned models from [FusionBench](https://huggingface.co/collections/tanganke/flan-t5-large-models-fine-tuned-lora-16-on-glue-benchmark-664f2c8835234513c563d087) and Ourselves:
 `mnli`, `mrpc`, `qnli`, `qnli`, `qqp`, `rte`, `sst2`, `stsb`, `finance`, `imdb`, `agnews`, `hella`, `boolq`, `piqa`
 
 ────────────────────────────────────
@@ -136,14 +136,13 @@ python3 ./runner/mistral_inst.py --method 'MetaGPT' --save_dir './exp_results' -
 
 
 
-### Example Model Merging Results 
-#### Flan-T5-large
+## Example Model Merging Results 
+### Flan-T5-large
 On random sampled 10
-|                | Normalized Avg | mnli  | mrpc  | qnli  | qqp   | rte   | sst2  | finance | imdb  | hella | boolq |
+|                | Avg. Normalized | mnli  | mrpc  | qnli  | qqp   | rte   | sst2  | finance | imdb  | hella | boolq |
 |:--------------:|:--------------:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:------:|:-----:|:-----:|:-----:|
 | Pretrained      | 89.62 | 80.83 | 71.45 | 91.25 | 87.85 | 85.50 | 94.15 | 55.51   | 76.80 | 74.38 | 82.50 |
 | LoRA      | 100.00 | 88.50 | 83.56 | 94.55 | 87.80 | 91.98 | 94.95 | 96.48   | 95.95 | 76.88 | 85.62 |
-| **Simple Avg**| 92.42 | 80.83 | 76.82 | 92.90 | 86.20 | 87.02 | 94.95 | 67.40   | 79.70 | 76.25 | 83.75 |
 | **TIES**    | 93.00 | 63.58 | 77.51 | 92.85 | 86.95 | 86.26 | 94.15 | 76.21   | 95.90 | 76.88 | 82.50 |
 | **TALL-masks**| 96.79 | 81.83 | 82.96 | 93.50 | 83.00 | 89.31 | 95.30 | 88.11  | 96.00 | 75.00 | 82.50 |
 | **MetaGPT**   | 84.95 | 45.92 | 70.07 | 92.15 | 87.15 | 86.26 | 94.72 | 56.83   | 76.85 | 75.62 | 73.75 |
@@ -151,11 +150,10 @@ On random sampled 10
 
 
 On all 13
-|                | Normalized Avg | mnli  | mrpc  | qnli  | qqp   | rte   | sst2  | stsb  | finance | imdb  | agnews | hella | boolq | piqa  |
+|                | Avg. Normalized | mnli  | mrpc  | qnli  | qqp   | rte   | sst2  | stsb  | finance | imdb  | agnews | hella | boolq | piqa  |
 |:--------------:|:--------------:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-------:|:-----:|:------:|:-----:|:-----:|:-----:|
 | Pretrained | 91.26 | 80.83 | 71.45 | 91.25 | 87.85 | 85.50 | 94.15 | 87.19 | 55.51   | 76.80 | 88.00  | 74.38 | 82.50  | 77.47 |
 | LoRA       | 100.00 | 88.50 | 83.56 | 94.55 | 87.80 | 91.98 | 94.95 | 90.85 | 96.48   | 95.95 | 91.00  | 76.88 | 85.62  | 79.45 |
-| **Simple Avg** | 92.83 | 80.08 | 76.38 | 92.65 | 86.30 | 87.02 | 94.95 | 87.28 | 62.11   | 77.05 | 89.50  | 76.25 | 83.75  | 77.75 |
 | **TIES**       | 91.40 | 55.00 | 77.08 | 92.90 | 86.80 | 85.88 | 94.50 | 85.27 | 55.95   | 95.85 | 91.00  | 78.12 | 80.00  | 77.09 |
 | **TALL-masks** | 90.68 | 51.75 | 82.18 | 93.30 | 82.75 | 89.69 | 94.95 | 83.20 | 70.04   | 96.00 | 91.00  | 71.25 | 67.50  | 76.10 |
 | **MetaGPT**    | 88.37 | 49.50 | 72.58 | 92.50 | 86.85 | 87.02 | 94.50 | 84.56 | 52.86   | 76.95 | 91.00  | 75.62 | 78.75  | 76.87 |
@@ -165,13 +163,12 @@ On all 13
 *Feel free to adjust the number of samples for each dataset according to your needs [here](https://github.com/IBM/STAR/blob/d0d8895e543046ebb64a22585c17d6d5ecc09f91/evaluator/flan_t5_large_evaluator.py#L34), and an identical trend could still be observed.*
 
 
-#### Llama-3.2-3B-Instruct 
+### Llama-3.2-3B-Instruct 
 On random sampled 9
-|          | Normalized Avg | sst2  | mrpc  | wic   | cola  | mnli  | stsb  | cb    | multirc | rte   |
+|          | Avg. Normalized | sst2  | mrpc  | wic   | cola  | mnli  | stsb  | cb    | multirc | rte   |
 |:--------:|:--------------:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-------:|:-----:|
 | Pretrained | 67.90 | 90.33 | 51.00 | 49.67 | 53.00 | 50.67 | 22.28 | 66.07 | 67.67 | 62.21 |
 | LoRA | 100.00 | 94.33 | 83.67 | 68.67 | 77.00 | 83.11 | 83.60 | 98.21 | 79.67 | 84.73 |
-| **Simple Avg** | 84.28 | 91.00 | 69.33 | 54.33 | 73.67 | 55.33 | 61.91 | 83.93 | 66.67 | 80.15 |
 | **TIES** | 90.42 | 88.67 | 85.00 | 57.00 | 74.00 | 66.22 | 68.69 | 87.50 | 72.00 | 82.82 |
 | **TALL-masks** | 89.10 | 90.67 | 79.00 | 65.67 | 70.67 | 58.89 | 70.47 | 85.71 | 70.00 | 79.39 |
 | **MetaGPT** | 81.64 | 88.67 | 74.00 | 53.00 | 69.00 | 48.89 | 55.13 | 83.93 | 65.00 | 79.39 |
@@ -179,11 +176,10 @@ On random sampled 9
 
 
 On all 13
-|          | Normalized Avg | sst2  | mrpc  | wic   | cola  | mnli  | stsb  | cb    | multirc | rte   | copa  | wsc   | qnli  | qqp   |
+|          | Avg. Normalized | sst2  | mrpc  | wic   | cola  | mnli  | stsb  | cb    | multirc | rte   | copa  | wsc   | qnli  | qqp   |
 |:--------:|:--------------:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-------:|:-----:|:-----:|:-----:|:-----:|:-----:|
 | Pretrained | 71.77 | 90.33 | 51.00 | 49.67 | 53.00 | 50.67 | 22.28 | 66.07 | 67.67 | 62.21 | 68.89 | 56.58 | 69.33 | 66.33 |
 | LoRA | 100.0 | 94.33 | 83.67 | 68.67 | 77.00 | 83.11 | 83.60 | 98.21 | 79.67 | 84.73 | 92.22 | 63.16 | 89.67 | 82.67 |
-| **Simple Avg** | 87.15 | 90.00 | 76.67 | 58.00 | 72.67 | 47.56 | 54.87 | 82.14 | 72.33 | 81.30 | 86.67 | 63.16 | 85.67 | 69.67 |
 | **TIES** | 79.11 | 68.00 | 78.33 | 60.33 | 71.00 | 35.56 | 68.01 | 85.71 | 64.67 | 80.15 | 87.78 | 68.42 | 0.00  | 76.00 |
 | **TALL-masks** | 74.61 | 66.67 | 71.00 | 63.33 | 60.67 | 27.33 | 74.83 | 85.71 | 64.67 | 72.52 | 87.78 | 57.89 | 1.33  | 65.00 |
 | **MetaGPT** | 82.70 | 88.67 | 66.67 | 51.00 | 66.33 | 55.11 | 54.54 | 82.14 | 58.00 | 80.15 | 86.67 | 55.26 | 86.00 | 67.00 |
@@ -192,13 +188,12 @@ On all 13
 
 
 
-#### Mistral-7B-Instruct 
+### Mistral-7B-Instruct 
 On random sampled 12
-|          | Normalized Avg | ethos | causal | ncbi  | owant | gap   | snli  | disco | math  | casino | story | pubmed | sst2  |
+|          | Avg. Normalized  | ethos | causal | ncbi  | owant | gap   | snli  | disco | math  | casino | story | pubmed | sst2  |
 |:--------:|:--------------:|:-----:|:------:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:------:|:-----:|:------:|:-----:|
 | Pretrained | 67.76 | 90.00 | 68.50  | 81.25 | 44.50 | 86.00 | 44.00 | 10.00 | 93.00 | 38.67  | 70.00 | 63.00  | 61.00 |
 | LoRA | 100.00 | 100.00 | 82.00  | 100.00 | 96.50 | 90.00 | 80.00 | 67.50 | 100.00 | 90.67  | 94.00 | 97.00  | 85.00 |
-| **Simple Avg**  | 79.89 | 93.33 | 79.00  | 87.50 | 48.50 | 89.00 | 46.00 | 13.75 | 94.00 | 61.33  | 95.00 | 89.00  | 85.00 |
 | **TIES** | 62.24 | 50.00 | 70.50  | 43.75 | 94.50 | 79.00 | 42.00 |  0.00 | 29.00 | 61.33  | 82.00 | 86.00  | 48.00 |
 | **TALL-masks** | 68.22 | 52.33 | 72.50  | 68.75 | 81.50 | 74.00 | 42.00 |  7.50 | 38.00 | 66.67  | 93.00 | 88.00  | 66.00 |
 | **MetaGPT** | 76.80 | 86.67 | 73.50  | 75.00 | 89.50 | 88.00 | 40.00 | 10.00 | 88.00 | 52.00  | 90.00 | 83.00  | 75.00 |
