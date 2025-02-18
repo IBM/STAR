@@ -103,7 +103,7 @@ class Llama_3_2_instruct_evaluator:
             self.text_label_map = {
                 '0': ['entail', 'Entail', 'entailment', 'Entailment'],
                 '1': ['neither', 'Neither'],
-                '2': ['contradiction', 'Contradiction', 'contradict', 'Contradict'] ## 偷改過(for PEFT有較好結果)
+                '2': ['contradiction', 'Contradiction', 'contradict', 'Contradict']
             }
         elif self.dataset_name == 'copa':
             ds = load_dataset("aps/super_glue", "copa", cache_dir=self.cache_dir)            
