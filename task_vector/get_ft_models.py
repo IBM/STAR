@@ -60,7 +60,7 @@ def load_flan_t5_large_ft_tvs(base_model, tasks, cache_dir):
     print(f'Downloading LoRAs of Flan-T5-large, to {cache_dir}')
     for task in tasks:
         print(task)
-        if task in ['mnli', 'mrpc', 'qnli', 'qnli', 'qqp', 'rte', 'sst2', 'stsb']:
+        if task in ['mnli', 'mrpc', 'qnli', 'qqp', 'rte', 'sst2', 'stsb']:
             model_name = f"tanganke/flan-t5-large_glue-{task}_lora-16"
             lora_rank, lora_alpha, lora_parameters_dict = load_lora(model_name, cache_dir)
             
