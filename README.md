@@ -9,7 +9,7 @@ git clone https://github.com/IBM/STAR.git
 cd STAR
 
 # 2. Create a virtual environment and activate it
-conda create --name STAR-env python=3.9
+conda create --name STAR-env python=3.12
 conda activate STAR-env
 
 # 3. Install dependencies
